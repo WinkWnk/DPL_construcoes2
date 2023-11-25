@@ -60,8 +60,6 @@ function handleFileSelect(evt) {
 
   verificaPagina()
 
-  images = [];
-
   for (let i = 0; i < files.length; i++) {
     const file = files[i];
     const reader = new FileReader();
@@ -90,10 +88,12 @@ function displayImages() {
 
   for (let i = 0; i < images.length; i++) {
     imageContainer.appendChild(images[i].imgElement);
-    img.push(images[i].imgElement.src)
+    // img.push(images[i].imgElement.src)
   }
-  console.log(img)
+  // console.log(img)
 }
+
+
 
 
 btnAvancar.addEventListener("click", async (evento) => {
@@ -103,25 +103,56 @@ btnAvancar.addEventListener("click", async (evento) => {
   const isAprPage = window.location.href.includes("apr.html");
 
   if (isAprPage) {
-    // Se estiver na página "apr.html", execute o armazenamento diretamente sem confirmação
     if (images.length === 0) {
       alert("VOCÊ DEVE INSERIR PELO MENOS UMA IMAGEM PARA PROSSEGUIR.");
     } else {
-      temporaryImageStorage.push({ temporaryImageName, images });
-      store(); // Armazenar no Firestore Storage
+      // Store each image separately
+      for (let i = 0; i < images.length; i++) {
+        temporaryImageStorage.push({ temporaryImageName, images: [images[i]] });
+        store(); // Armazenar no Firestore Storage
+      }
     }
   } else {
-    // Se não estiver na página "apr.html", peça a confirmação do checked
     if (!confir.checked) {
-      alert("VOCÊ DEVE CONFIRMAR ANTES DE PROSSEGUIR.");
-    } else if (images.length === 0) {
-      alert("VOCÊ DEVE INSERIR PELO MENOS UMA IMAGEM PARA PROSSEGUIR.");
-    } else {
-      temporaryImageStorage.push({ temporaryImageName, images });
-      store(); // Armazenar no Firestore Storage
-    }
-  }
+            alert("VOCÊ DEVE CONFIRMAR ANTES DE PROSSEGUIR.");
+          } else if (images.length === 0) {
+            alert("VOCÊ DEVE INSERIR PELO MENOS UMA IMAGEM PARA PROSSEGUIR.");
+          } else {
+            temporaryImageStorage.push({ temporaryImageName, images });
+            store(); // Armazenar no Firestore Storage
+          }
+        }
 });
+
+
+// btnAvancar.addEventListener("click", async (evento) => {
+//   evento.preventDefault();
+
+//   // Verificar se está na página "apr.html"
+//   const isAprPage = window.location.href.includes("apr.html");
+
+//   if (isAprPage) {
+//     // Se estiver na página "apr.html", execute o armazenamento diretamente sem confirmação
+//     if (images.length === 0) {
+//       alert("VOCÊ DEVE INSERIR PELO MENOS UMA IMAGEM PARA PROSSEGUIR.");
+//     } else {
+
+//       for(let i = 0; i < images.length; i++)
+//       temporaryImageStorage.push({ temporaryImageName, images: [images[1]] });
+//       store(); // Armazenar no Firestore Storage
+//     }
+//   } else {
+//     // Se não estiver na página "apr.html", peça a confirmação do checked
+//     if (!confir.checked) {
+//       alert("VOCÊ DEVE CONFIRMAR ANTES DE PROSSEGUIR.");
+//     } else if (images.length === 0) {
+//       alert("VOCÊ DEVE INSERIR PELO MENOS UMA IMAGEM PARA PROSSEGUIR.");
+//     } else {
+//       temporaryImageStorage.push({ temporaryImageName, images });
+//       store(); // Armazenar no Firestore Storage
+//     }
+//   }
+// });
 
 
 
@@ -129,7 +160,7 @@ function store() {
   loader.classList.replace("d-none", "d-block")
   try {
     // Fazendo o upload da imagem para o Storage
-    uploadBytes(storageRef, btnCamera.files[0]).then((resultado) => {
+    uploadBytes(storageRef, images[0].files[0]).then((resultado) => {
       //console.log('Upload realizado', resultado);
 
       // Obtendo a URL de download da imagem
@@ -166,8 +197,13 @@ function store() {
           }
 
           // Limpar as imagens para a próxima página
-          images = [];
-          displayImages();
+          images.shift();
+          if (images.length > 0) {
+            store();
+          } else {
+            images = [];
+            displayImages();
+          }
         })
         .catch((error) => {
           // Uma lista completa de códigos de erro está disponível em
